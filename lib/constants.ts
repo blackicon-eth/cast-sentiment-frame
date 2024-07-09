@@ -1,0 +1,1 @@
+export const DEFAULT_HUB_API_KEY = "NEYNAR_FRAMES_JS";

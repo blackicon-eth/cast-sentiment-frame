@@ -1,0 +1,6 @@
+export const createCastIntent = (fid: string, sentiment: string) => {
+  const url = `https://beearly.club/frames/sentiment?fid=${fid}`;
+  const text = `I just checked my sentiment on Warpcast and it's quite ${sentiment}. Check yours too!`;
+  const finalURL = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(url)}`;
+  return finalURL;
+};
