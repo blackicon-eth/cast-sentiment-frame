@@ -1,8 +1,8 @@
 import { DEFAULT_HUB_API_KEY } from "../constants";
-import { MbdResponse } from "./types";
+import { NeynarResponse } from "./types";
 
-export const get100MostRecentCastsForUser = async (fid: string): Promise<MbdResponse> => {
-  const queryString = "?fid=" + fid + "&viewerFid=3&limit=100";
+export const getMostRecentCastsForUser = async (fid: string, cursor: string): Promise<NeynarResponse> => {
+  const queryString = "?fid=" + fid + "&viewerFid=3&limit=50" + (cursor ? "&cursor=" + cursor : "");
 
   // get channel feed from Neynar
   const url = "https://api.neynar.com/v1/farcaster/casts" + queryString;
@@ -14,7 +14,12 @@ export const get100MostRecentCastsForUser = async (fid: string): Promise<MbdResp
     },
   });
 
-  return neynarRes.json();
+  const neynarResJson = await neynarRes.json();
+
+  if (neynarResJson.code) {
+    return null;
+  }
+  return neynarResJson;
 };
 
 export const getSentimentLabels = async (ids: any) => {
