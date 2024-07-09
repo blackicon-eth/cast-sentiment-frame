@@ -12,7 +12,7 @@ const frameHandler = frames(async (ctx) => {
   // Search for the fid in the URL (if the fid is here, the frame was shared)
   const urlFid = ctx.url.searchParams.get("fid");
 
-  // Get the fid from the URL or the message
+  // Get the fid from the URL or the cast message
   const fid = urlFid || ctx.message?.requesterFid;
 
   if (!fid) {
