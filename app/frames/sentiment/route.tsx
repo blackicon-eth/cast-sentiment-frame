@@ -2,8 +2,8 @@
 import { Button } from "frames.js/next";
 import { frames } from "../frames";
 import { appURL } from "../../utils";
-import { MbdResponse } from "../../../lib/mbd/types";
-import { get100MostRecentCastsForUser, getSentimentLabels } from "../../../lib/mbd";
+import { NeynarResponse } from "../../../lib/mbd/types";
+import { getMostRecentCastsForUser, getSentimentLabels } from "../../../lib/mbd";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { createCastIntent } from "../../../lib/farcaster";
@@ -14,8 +14,6 @@ const frameHandler = frames(async (ctx) => {
 
   // Get the fid from the URL or the message
   const fid = urlFid || ctx.message?.requesterFid;
-
-  console.log("URL FID: ", fid);
 
   if (!fid) {
     return {
@@ -31,14 +29,34 @@ const frameHandler = frames(async (ctx) => {
     };
   }
 
-  // get the most recent 100 casts for user from Neynar
-  const nRes: MbdResponse = await get100MostRecentCastsForUser(fid.toString());
+  // get the most recent casts for a user from Neynar and extract the cast hashes (item IDs)
+  let cursor = "";
+  let ids: string[] = [];
+  do {
+    const neynarRes: NeynarResponse = await getMostRecentCastsForUser(fid.toString(), cursor);
+    if (neynarRes) {
+      ids.push(...neynarRes.result.casts.map((cast: { hash: string }) => cast.hash));
+      cursor = neynarRes.result.next.cursor;
+    } else {
+      return {
+        image: `${appURL()}/error.png`,
+        imageOptions: {
+          aspectRatio: "1.91:1",
+        },
+        buttons: [
+          <Button action="post" target="/sentiment">
+            Try again
+          </Button>,
+        ],
+      };
+    }
+  } while (cursor && ids.length < 100);
 
-  // extract the cast hashes (item IDs)
-  const ids: string[] = nRes.result.casts.map((cast: { hash: string }) => cast.hash);
+  // Remove the last elemnts to have only 100 casts (maximum permitted by mbd)
+  ids = ids.slice(0, 100);
 
   // get sentiment data from mbd
-  const mRes = await getSentimentLabels(ids);
+  const mbdRes = await getSentimentLabels(ids);
 
   // compute score by taking the average positivity for the user's casts
   let count = 0;
@@ -47,7 +65,7 @@ const frameHandler = frames(async (ctx) => {
   let negativeSum = 0;
   let neutralSum = 0;
 
-  mRes.body.map((current: any) => {
+  mbdRes.body.map((current: any) => {
     const sentiment = current.labels.sentiment;
     if (sentiment.positive && sentiment.negative && sentiment.neutral) {
       count++;
