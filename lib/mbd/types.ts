@@ -1,5 +1,5 @@
 export type MbdResponse = {
-  status_code: 200;
+  status_code: number;
   body: [
     {
       item_id: string;
