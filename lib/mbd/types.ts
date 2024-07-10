@@ -1,8 +1,15 @@
-export type NeynarResponse = {
-  result: {
-    casts: any;
-    next: {
-      cursor: string;
-    };
-  };
-} | null;
+export type MbdResponse = {
+  status_code: 200;
+  body: [
+    {
+      item_id: string;
+      labels: {
+        sentiment: {
+          neutral: number;
+          positive: number;
+          negative: number;
+        };
+      };
+    }
+  ];
+};

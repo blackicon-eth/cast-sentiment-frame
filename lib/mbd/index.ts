@@ -1,42 +1,36 @@
-import { DEFAULT_HUB_API_KEY } from "../constants";
-import { NeynarResponse } from "./types";
+import { MbdResponse } from "./types";
 
-export const getMostRecentCastsForUser = async (fid: string, cursor: string): Promise<NeynarResponse> => {
-  const queryString = "?fid=" + fid + "&viewerFid=3&limit=50" + (cursor ? "&cursor=" + cursor : "");
+/**
+ * Get the sentiment labels for the casts from MBD endpoint.
+ * @param {string[]} ids - The casts' IDs to get the sentiment labels.
+ * @returns The response from MBD with the sentiment labels related to the casts.
+ **/
+export const getSentimentLabels = async (ids: string[]): Promise<MbdResponse | null> => {
+  try {
+    let url = "https://api.mbd.xyz/v1/farcaster/casts/labels/for-items";
+    const mbdRes = await fetch(url, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "HTTP-Referer": "https://docs.mbd.xyz/",
+        "X-Title": "mbd_docs",
+        "content-Type": "application/json",
+        "x-api-key": process.env.MBD_API_KEY!,
+      },
+      body: JSON.stringify({
+        items_list: ids,
+        label_category: "sentiment",
+      }),
+    });
 
-  // get channel feed from Neynar
-  const url = "https://api.neynar.com/v1/farcaster/casts" + queryString;
-  const neynarRes = await fetch(url, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      api_key: DEFAULT_HUB_API_KEY,
-    },
-  });
+    if (!mbdRes.ok) {
+      console.error("Error while getting the sentiment labels: ", mbdRes.statusText);
+      return null;
+    }
 
-  const neynarResJson = await neynarRes.json();
-
-  if (neynarResJson.code) {
+    return await mbdRes.json();
+  } catch (error: any) {
+    console.error("Error while getting the sentiment labels: ", error.message ?? error);
     return null;
   }
-  return neynarResJson;
-};
-
-export const getSentimentLabels = async (ids: any) => {
-  let url = "https://api.mbd.xyz/v1/farcaster/casts/labels/for-items";
-  const mbdRes = await fetch(url, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "HTTP-Referer": "https://docs.mbd.xyz/",
-      "X-Title": "mbd_docs",
-      "content-Type": "application/json",
-      "x-api-key": process.env.MBD_API_KEY!,
-    },
-    body: JSON.stringify({
-      items_list: ids,
-      label_category: "sentiment",
-    }),
-  });
-  return mbdRes.json();
 };
