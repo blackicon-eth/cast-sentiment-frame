@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-key */
 import { Button } from "frames.js/next";
 import { frames } from "../frames";
 import { appURL } from "../../utils";
@@ -88,7 +87,7 @@ const frameHandler = frames(async (ctx) => {
   return {
     image: (
       <div tw="flex flex-col w-full h-full">
-        <img src={`${appURL()}/background.png`} tw="absolute w-full h-full" />
+        <img src={`${appURL()}/background.png`} alt="background-image" tw="absolute w-full h-full" />
         <div tw="flex flex-col items-center -mt-4">
           <h1 tw="text-header text-center -mb-28">Sentiment in your casts</h1>
           <h1 tw="text-header text-center -mb-12">is mainly</h1>
