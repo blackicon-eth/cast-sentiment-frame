@@ -8,7 +8,6 @@ import * as path from "node:path";
 import { createCastIntent } from "../../../lib/farcaster";
 import { get100MostRecentCastsHashesForUser } from "../../../lib/neynar";
 import { errorFrame } from "../../../lib/frames/constants";
-import { MbdResponse } from "../../../lib/mbd/types";
 
 const frameHandler = frames(async (ctx) => {
   // Search for the fid in the URL (if the fid is here, the frame was shared)
@@ -31,7 +30,7 @@ const frameHandler = frames(async (ctx) => {
   // Get sentiment data from mbd
   const mbdRes = await getSentimentLabels(ids);
 
-  if (!mbdRes) {
+  if (!mbdRes || !mbdRes.body || mbdRes.body.length < 1) {
     return errorFrame;
   }
 
@@ -42,14 +41,21 @@ const frameHandler = frames(async (ctx) => {
   let negativeSum = 0;
   let neutralSum = 0;
 
-  mbdRes.body.map((current: any) => {
+  // Find the index of the sentiment labels to use it later
+  const positiveIndex = mbdRes.body[0]!.sentiment.findIndex((sentiment) => sentiment.label === "positive");
+  const negativeIndex = mbdRes.body[0]!.sentiment.findIndex((sentiment) => sentiment.label === "negative");
+  const neutralIndex = mbdRes.body[0]!.sentiment.findIndex((sentiment) => sentiment.label === "neutral");
+
+  mbdRes.body.map((current) => {
     console.log("Current item: ", current);
-    const sentiment = current.labels.sentiment;
-    if (sentiment.positive && sentiment.negative && sentiment.neutral) {
+    const positive = current.sentiment[positiveIndex];
+    const negative = current.sentiment[negativeIndex];
+    const neutral = current.sentiment[neutralIndex];
+    if (positive && negative && neutral) {
       count++;
-      positiveSum += sentiment.positive;
-      neutralSum += sentiment.neutral;
-      negativeSum += sentiment.negative;
+      positiveSum += positive.score;
+      neutralSum += neutral.score;
+      negativeSum += negative.score;
     }
   });
 
